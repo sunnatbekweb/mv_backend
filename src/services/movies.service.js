@@ -1,9 +1,22 @@
 import { ObjectId } from 'mongodb'
 import { getDatabase } from '../config/database.js'
 
-export async function getAllMovies({ limit = 20 } = {}) {
+export async function getAllMovies({
+	page = 1,
+	limit = 20,
+	filters = {}
+} = {}) {
 	const db = getDatabase()
-	return db.collection('movies').find({}).limit(limit).toArray()
+	const skip = (page - 1) * limit
+
+	const [movies, total] = await Promise.all([
+		db.collection('movies').find(filters).skip(skip).limit(limit).toArray(),
+		db.collection('movies').countDocuments(filters)
+	])
+	return {
+		movies,
+		pagination: { page, limit, total, totalPages: Math.ceil(total / limit) }
+	}
 }
 
 export async function getMovieById(id) {

@@ -3,8 +3,25 @@ import * as moviesService from '../services/movies.service.js'
 
 export async function getMovies(req, res) {
 	try {
-		const movies = await moviesService.getAllMovies({ limit: 20 })
-		res.status(200).json(movies)
+		const page = parseInt(req.query.page) || 1
+		const limit = parseInt(req.query.limit) || 20
+
+		const filters = {}
+
+		if (req.query.genre) {
+			filters.genres = req.query.genre
+		}
+
+		if (req.query.year) {
+			filters.year = parseInt(req.query.year)
+		}
+
+		if (req.query.title) {
+			filters.title = { $regex: req.query.title, $options: 'i' }
+		}
+
+		const result = await moviesService.getAllMovies({ page, limit, filters })
+		res.status(200).json(result)
 	} catch (error) {
 		console.error(error)
 		res.status(500).json({ error: 'Не удалось получить список фильмов' })
